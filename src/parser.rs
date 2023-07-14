@@ -1,28 +1,29 @@
 use std::{fs::File, io::Read};
 use regex::Regex;
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use indicatif::{ProgressBar, ProgressIterator};
+use serde::{Serialize, Deserialize};
 
 use crate::writer::Writer;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsedApi {
     pub endpoint: String,
     pub http_method: String,
     pub params: Vec<String>,
     pub action: String,
     pub file: Option<String>,
+	pub return_type: String
 }
 
 impl UsedApi {
-    pub fn new(endpoint: String, http_method: String, params: Vec<String>, action: String, file: Option<String>) -> Self {
+    pub fn new(endpoint: String, http_method: String, params: Vec<String>, action: String, file: Option<String>, return_type: String) -> Self {
         UsedApi {
             endpoint,
             http_method,
             params,
             action,
             file,
+			return_type
         }
     }
 
@@ -62,7 +63,7 @@ impl ApiParser {
 		match File::open(&filename) {
 			Ok(f) => file = f,
 			Err(_) => {
-				self.out.print(format!("File {} does not exist", filename).as_str());
+				self.out.println(format!("File {} does not exist", filename).as_str());
 				std::process::exit(1);
 			}
 		};
@@ -82,7 +83,7 @@ impl ApiParser {
 			if capture.get(5).is_some() {
 				let return_type = match capture.get(3) {
 					Some(t) => t.as_str().to_owned(),
-					None => String::new()
+					None => String::from("-")
 				};
 				let method_name = match capture.get(4) {
 					Some(m) => m.as_str().to_owned(),
@@ -106,7 +107,8 @@ impl ApiParser {
 					http_method,
 					parameters,
 					camel_case_to_text(method_name),
-					Some(file.unwrap().clone().to_owned())
+					Some(file.unwrap().clone().to_owned()),
+					return_type
 				));
 			} else {
 				let method_name = match capture.get(3) {
@@ -138,7 +140,7 @@ impl ApiParser {
 				};
 
 				apis.push(UsedApi::new(endpoint, http_method, parameters,
-					camel_case_to_text(method_name), Some(file.unwrap().clone().to_owned())
+					camel_case_to_text(method_name), Some(file.unwrap().clone().to_owned()), String::from("-")
 				));
 			}
 		}
@@ -147,7 +149,7 @@ impl ApiParser {
 	}
 
 	pub fn parse_dir(&mut self, dir: String) -> Vec<UsedApi> {
-		let blacklist: [&str;0] = [];//["resources", "res", "assets", "lib", "static"];
+		let blacklist: Vec<&str> = vec!["resources", "res", "assets", "lib", "static", "kotlinx"];
 		let mut apis: Vec<UsedApi> = Vec::new();
 		let mut i = 0;
 
@@ -170,6 +172,22 @@ impl ApiParser {
 		}
 		println!("Found {} APIs", i);
 		apis
+	}
+
+	pub fn print_md_table(&mut self, apis: Vec<UsedApi>) {
+		let mut apis = apis;
+		apis.sort_by(|a, b| a.endpoint.cmp(&b.endpoint));
+
+		self.out.println("| Endpoint | Method | Request Body | Action | File |");
+		self.out.println("|:---------|:-------|:-------------|:-------|:-----|");
+		apis.iter().for_each(|api| self.out.println(api.to_string().as_str()));
+	}
+
+	pub fn print_json(&mut self, apis: Vec<UsedApi>) {
+		let mut apis = apis;
+		apis.sort_by(|a, b| a.endpoint.cmp(&b.endpoint));
+
+		self.out.println(serde_json::to_string_pretty(&apis).unwrap().as_str());
 	}
 }
 

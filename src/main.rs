@@ -23,6 +23,8 @@ struct CliArgs {
     /// Specify the output file
     #[clap(short('o'), long("output"), value_name = "output")]
     output: Option<String>,
+    #[clap(short('F'), long("format"), value_name = "format")]
+    format: Option<String>,
 }
 
 fn main() {
@@ -55,6 +57,21 @@ fn main() {
     }
 
     apis.sort_by(|a, b| a.endpoint.cmp(&b.endpoint));
-    apis.into_iter().for_each(|a| println!("{}", a.to_string()));
 
+    if let Some(format) = args.format {
+        match format.as_str() {
+            "json" => {
+                parser.print_json(apis);
+            }
+            "md" => {
+                parser.print_md_table(apis);
+            }
+            _ => {
+                eprintln!("Unknown format {}", format);
+                process::exit(1);
+            }
+        }
+    } else {
+        parser.print_md_table(apis);
+    }
 }

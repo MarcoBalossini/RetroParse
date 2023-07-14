@@ -33,7 +33,7 @@ impl Writer {
         }
     }
 
-    pub fn print(&mut self, text: &str) {
+    pub fn println(&mut self, text: &str) {
         if let Some(file) = &mut self.file {
             if let Err(_) = writeln!(file, "{}", text) {
                 eprintln!("Error writing to file");
