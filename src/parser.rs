@@ -35,8 +35,7 @@ impl UsedApi {
         };
 
         format!(
-            "| {}{} | {} | {} | {} | {}",
-            if self.endpoint.chars().next() != Some('/') { "/" } else { "" },
+            "| {} | {} | {} | {} | {}",
             self.endpoint,
             self.http_method,
             par,
@@ -80,6 +79,19 @@ impl ApiParser {
 		for capture in re.captures_iter(text.as_str()) {
 			let http_method = capture.get(1).unwrap().as_str().to_owned();
 			let endpoint = capture.get(2).unwrap().as_str().to_owned();
+			// If it ends with ", then remove it
+			let endpoint = if endpoint.ends_with("\"") {
+				endpoint[..endpoint.len()-1].to_owned()
+			} else {
+				endpoint
+			};
+			// If it does not start with /, then add it
+			let endpoint = if !endpoint.starts_with("/") {
+				format!("/{}", endpoint)
+			} else {
+				endpoint
+			};
+			
 			if capture.get(5).is_some() {
 				let return_type = match capture.get(3) {
 					Some(t) => t.as_str().to_owned(),
@@ -149,7 +161,7 @@ impl ApiParser {
 	}
 
 	pub fn parse_dir(&mut self, dir: String) -> Vec<UsedApi> {
-		let blacklist: Vec<&str> = vec!["resources", "res", "assets", "lib", "static", "kotlinx"];
+		let blacklist: Vec<&str> = vec!["resources", "assets", "static", "kotlinx"];
 		let mut apis: Vec<UsedApi> = Vec::new();
 		let mut i = 0;
 
