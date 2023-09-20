@@ -74,7 +74,7 @@ impl ApiParser {
 
 	pub fn parse_text(&mut self, text: String, file: Option<&str>) -> Vec<UsedApi> {
 		let mut apis: Vec<UsedApi> = Vec::new();
-		let re = Regex::new(r#"@(\w+)\("{0,1}([^\n()]+)"{0,1}\)\s+[\w_]+(<[^"{}]+>){0,1}\s*([\w_]+)\(([^\n{}]*)\);"#).unwrap();
+		let re = Regex::new(r#"@([\w.]+)\("{0,1}([^\n()]+)"{0,1}\)\s+[\w_]+(<[^"{}]+>){0,1}\s*([\w_]+)\(([^\n{}]*)\);"#).unwrap();
 
 		for capture in re.captures_iter(text.as_str()) {
 			let http_method = capture.get(1).unwrap().as_str().to_owned();

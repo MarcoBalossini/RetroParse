@@ -8,8 +8,8 @@ mod parser;
 use parser::ApiParser;
 
 #[derive(Parser, Debug)]
-#[clap(name = "java_api", version = "0.1.0", author = "Marco Balossini")]
-#[clap(about = "Parse API endpoints from java code.", long_about = None)]
+#[clap(name = "retroparse", version = "0.1.0", author = "Marco Balossini")]
+#[clap(about = "Parse Retrofit2 API endpoints from java code.", long_about = None)]
 struct CliArgs {
     /// Specify the target file
     #[clap(short('f'), long("file"), value_name = "file")]
